@@ -2,7 +2,6 @@ import { client } from '../lib/client';
 import { HeroBanner, Product, FooterBanner } from '../components';
 
 const Home = ({ products, bannerData }) => {
-  console.log(products, bannerData);
   return (
     <>
       <HeroBanner heroBanner={bannerData.length && bannerData[0]} />
@@ -15,7 +14,7 @@ const Home = ({ products, bannerData }) => {
           <Product key={product._id} product={product} />
         ))}
       </div>
-      <FooterBanner />
+      <FooterBanner footerBanner={bannerData && bannerData[0]} />
     </>
   );
 };
