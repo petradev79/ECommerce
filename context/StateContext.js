@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 const Context = createContext();
@@ -9,6 +9,17 @@ export const StateContext = ({ children }) => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalQuantities, setTotalQuantities] = useState(0);
   const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    const items = JSON.parse(localStorage.getItem('cartItems'));
+    if (items) {
+      setCartItems(items);
+      setTotalPrice(
+        items.reduce((acc, value) => acc + value.price * value.quantity, 0)
+      );
+      setTotalQuantities(items.reduce((acc, value) => acc + value.quantity, 0));
+    }
+  }, []);
 
   let foundProduct, index;
 
@@ -24,18 +35,26 @@ export const StateContext = ({ children }) => {
 
     if (checkProductInCart) {
       const updatedCartItems = cartItems.map((cartProduct) => {
-        if (cartProduct._id === product._id)
+        if (cartProduct._id === product._id) {
           return {
             ...cartProduct,
             quantity: cartProduct.quantity + quantity,
           };
+        } else {
+          return { ...cartProduct };
+        }
       });
 
       setCartItems(updatedCartItems);
+      localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
     } else {
       product.quantity = quantity;
 
       setCartItems([...cartItems, { ...product }]);
+      localStorage.setItem(
+        'cartItems',
+        JSON.stringify([...cartItems, { ...product }])
+      );
     }
 
     toast.success(`${qty} ${product.name} added to the cart.`);
@@ -54,32 +73,37 @@ export const StateContext = ({ children }) => {
       (prevTotalQuantities) => prevTotalQuantities - foundProduct.quantity
     );
     setCartItems(newCartItems);
+    localStorage.setItem('cartItems', JSON.stringify(newCartItems));
   };
 
   const toggleCartItemQuanitity = (id, value) => {
     foundProduct = cartItems.find((item) => item._id === id);
     index = cartItems.findIndex((product) => product._id === id);
     const newCartItems = cartItems.filter((item) => item._id !== id);
+    let items;
 
     if (value === 'inc') {
-      setCartItems([
+      items = [
         ...newCartItems.slice(0, index),
         { ...foundProduct, quantity: foundProduct.quantity + 1 },
         ...newCartItems.slice(index),
-      ]);
+      ];
+      setCartItems(items);
       setTotalPrice((prevTotalPrice) => prevTotalPrice + foundProduct.price);
       setTotalQuantities((prevTotalQuantities) => prevTotalQuantities + 1);
     } else if (value === 'dec') {
       if (foundProduct.quantity > 1) {
-        setCartItems([
+        items = [
           ...newCartItems.slice(0, index),
           { ...foundProduct, quantity: foundProduct.quantity - 1 },
           ...newCartItems.slice(index),
-        ]);
+        ];
+        setCartItems(items);
         setTotalPrice((prevTotalPrice) => prevTotalPrice - foundProduct.price);
         setTotalQuantities((prevTotalQuantities) => prevTotalQuantities - 1);
       }
     }
+    localStorage.setItem('cartItems', JSON.stringify(items));
   };
 
   const incQty = () => {
